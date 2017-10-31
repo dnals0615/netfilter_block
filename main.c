@@ -78,32 +78,39 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	
 	nfq_get_payload(nfa, (unsigned char **)&data);
 	
-	char * tmp = (char *)data;
+	unsigned char * tmp = (unsigned char *)data;
 
 	if(tmp[9] != 6) return 0; // check TCP
 
-	printf("ip protocol : %d\n", tmp[9]); //check!!!!!!
+	//printf("ip protocol : %d\n", tmp[9]); //check!!!!!!
 
 	int iplen = (tmp[0]&0x0f) * 4;
 	
-	printf("iplen : %d\n", iplen); //check!!!!!!
+	//printf("iplen : %d\n", iplen); //check!!!!!!
 	
-	printf("tmp[iplen] : %d\n", tmp[iplen]);
+	//printf("tmp[iplen] : %d\n", tmp[iplen]);  //check!!!!
 	tmp += iplen; //tmp[0] = tcp start
-	printf("tmp[0] : %d\n", tmp[0]);
+	//printf("tmp[0] : %d\n", tmp[0]);   // check!!!
 	int tcplen = (tmp[12]>>4) * 4;
+	//printf("tcplen : %d\n", tcplen);   //check!!!!
 	
-	unsigned char * http = tmp + tcplen;
+	//printf("tmp[tcplen] : %d\n", tmp[tcplen]);  //check!!!!!!
+	tmp += tcplen;
+	//printf("tmp[0] : %d\n",tmp[0]);
+	
+	unsigned char * http = (unsigned char *)tmp;
 
-	for(int i = 0; i<50;i++){
-		if(!strncmp(http, host, 6)) break;
-		else tmp++;
+	//printf("http[0] : %d  ?  tmp[0] : %d\n", http[0],tmp[0]);	//check !!!!!
+
+	for(int i = 0; i<200;i++){
+		if(strncmp(http, host, 6) == 0  ) break;
+		else http++;
 	}
-	//tmp += 6;
-//	printf("tmp : %c%c%c%c\n", tmp[0],tmp[1], tmp[2], tmp[3]);
+	http += 6;
+//	printf("http : %c%c%c%c\n", http[0],http[1], http[2], http[3]);
 //	printf("host : %s\n", target);
 // 	printf("비교값 : %d\n\n",strncmp(tmp, target, strlen(target)));
-	if(strncmp(tmp, target, strlen(target)) == 0)
+	if(strncmp(http, target, strlen(target)) == 0)
 		return nfq_set_verdict(qh, id, NF_DROP, 0, NULL);
 	else
 		return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
