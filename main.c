@@ -78,12 +78,19 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	
 	nfq_get_payload(nfa, (unsigned char **)&data);
 	
-	char * tmp = (char *)&data;
+	char * tmp = (char *)data;
 
 	if(tmp[9] != 6) return 0; // check TCP
-	int iplen = (tmp[0]&&0x0f) * 4;
+
+	printf("ip protocol : %d\n", tmp[9]); //check!!!!!!
+
+	int iplen = (tmp[0]&0x0f) * 4;
 	
+	printf("iplen : %d\n", iplen); //check!!!!!!
+	
+	printf("tmp[iplen] : %d\n", tmp[iplen]);
 	tmp += iplen; //tmp[0] = tcp start
+	printf("tmp[0] : %d\n", tmp[0]);
 	int tcplen = (tmp[12]>>4) * 4;
 	
 	unsigned char * http = tmp + tcplen;
@@ -92,7 +99,10 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 		if(!strncmp(http, host, 6)) break;
 		else tmp++;
 	}
-	tmp += 6;
+	//tmp += 6;
+//	printf("tmp : %c%c%c%c\n", tmp[0],tmp[1], tmp[2], tmp[3]);
+//	printf("host : %s\n", target);
+// 	printf("비교값 : %d\n\n",strncmp(tmp, target, strlen(target)));
 	if(strncmp(tmp, target, strlen(target)) == 0)
 		return nfq_set_verdict(qh, id, NF_DROP, 0, NULL);
 	else
@@ -113,6 +123,7 @@ int main(int argc, char **argv)
 
 	target = argv[1];
 
+	
 	printf("opening library handle\n");
 	h = nfq_open();
 	if (!h) {
